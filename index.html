@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Meter UI - Grid Base</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container py-4">
+
+    <!-- Brand/Title and Yousef's Grid -->
+    <div class="row align-items-center mb-3">
+      <div class="col-6">
+        <h4 class="fw-bold">Smart Meter</h4>
+      </div>
+      <div class="col-6 text-end">
+        <div class="border p-2 d-inline-block">
+          <strong>Yousef’s grid</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rasyid’s Toggle Grid -->
+    <div class="p-3 d-flex align-items-center gap-3">
+      <span class="fw-semibold">Energy</span>
+      <div class="form-check form-switch m-0">
+        <input class="form-check-input" type="checkbox" id="metricsToggle">
+      </div>
+      <span class="fw-semibold">Financial</span>
+    </div>
+
+    <!-- Grid Area -->
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="border p-3 h-100">
+                <strong>Sol’s grid</strong>
+                <div id="sol-energy">Energy metrics view</div>
+                <div id="sol-finance" style="display: none;">Financial metrics view</div>
+            </div>
+        </div>          
+
+        <div class="col-md-8">
+        <div class="row g-3">
+            <div class="col-12">
+            <div class="border p-3">
+                <strong>Kiran’s grid</strong>
+                <div id="kiran-energy">Energy metrics view</div>
+                <div id="kiran-finance" style="display: none;">Financial metrics view</div>
+            </div>
+            </div>
+            <div class="col-12">
+            <div class="border p-3">
+                <strong>Jint’s grid</strong>
+                <div id="jint-energy">Energy metrics view</div>
+                <div id="jint-finance" style="display: none;">Financial metrics view</div>
+            </div>
+            </div>
+            <div class="col-12">
+            <div class="border p-3">
+                <strong>Rasyid’s grid</strong>
+                <div id="rasyid-energy">Energy metrics view</div>
+                <div id="rasyid-finance" style="display: none;">Financial metrics view</div>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Scripts (ORDER MATTERS) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
