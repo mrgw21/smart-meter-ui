@@ -60,20 +60,43 @@
             </div>
             </div>
             <div class="col-12">
-            <div class="border p-3">
-                <strong>Rasyid’s grid</strong>
-                <div id="rasyid-energy">Energy metrics view</div>
-                <div id="rasyid-finance" style="display: none;">Financial metrics view</div>
-            </div>
-            </div>
-        </div>
-        </div>
+                <div class="border p-3">
+                  <strong>Rasyid’s grid</strong>
+              
+                  <!-- Buttons for range selection -->
+                  <div class="d-flex justify-content-between align-items-center mt-3 mb-3 flex-wrap gap-2">
+                    <div class="btn-group" role="group" id="rangeButtons">
+                      <button class="btn btn-outline-primary" data-range="week">Week</button>
+                      <button class="btn btn-outline-primary" data-range="month">Month</button>
+                      <button class="btn btn-outline-primary" data-range="year">Year</button>
+                    </div>
+              
+                    <!-- Single calendar date picker -->
+                    <div class="d-flex align-items-center">
+                      <input type="date" class="form-control" id="customDate" />
+                    </div>
+                  </div>
+              
+                  <!-- Chart Canvas for Energy Metrics -->
+                  <div id="rasyid-energy">
+                    <canvas id="rasyidChartEnergy" height="200"></canvas>
+                  </div>
+              
+                  <!-- Chart Canvas for Financial Metrics -->
+                  <div id="rasyid-finance" style="display: none;">
+                    <canvas id="rasyidChartFinance" height="200"></canvas>
+                  </div>
+                </div>
+              </div>                                                                               
+        </div>              
     </div>
   </div>
 
-  <!-- Scripts (ORDER MATTERS) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="js/main.js"></script>
+<!-- Scripts (ORDER MATTERS) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
