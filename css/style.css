@@ -17,4 +17,13 @@ body {
   color: white;
 }
   
-  
+.btn-chart {
+  background-color: rgba(75, 192, 192, 1);
+  color: white;
+  border: none;
+}
+
+.btn-chart:hover {
+  background-color: rgba(60, 160, 160, 1);
+  color: white;
+}

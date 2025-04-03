@@ -1,8 +1,10 @@
 import { fetchLatest } from './api.js';
 
 $(document).ready(function () {
+  $('#tariffRate').val(localStorage.getItem('tariffRate') || '0.2703');
+  $('#standingCharge').val(localStorage.getItem('standingCharge') || '0.00');
+  showTariffModalIfNeeded();
   const toggle = $('#metricsToggle');
-  const COST_PER_KWH = 0.2703;
 
   const subGrids = {
     sol: ['#sol-energy', '#sol-finance'],
@@ -15,8 +17,16 @@ $(document).ready(function () {
   let usageMockData = {};
   let currentRange = 'week';
 
+  function getTariffSettings() {
+    return {
+      costPerKwh: parseFloat(localStorage.getItem('tariffRate')) || 0.2703,
+      standingCharge: parseFloat(localStorage.getItem('standingCharge')) || 0
+    };
+  }
+
   function switchMode(mode) {
     const isEnergy = mode === 'energy';
+    const { costPerKwh, standingCharge } = getTariffSettings();
 
     $('.metric-label').each(function () {
       const label = $(this);
@@ -27,17 +37,16 @@ $(document).ready(function () {
       const el = $(this);
       const kwh = parseFloat(el.data('energy-value'));
       if (!isNaN(kwh)) {
-        const cost = (kwh * COST_PER_KWH).toFixed(2);
+        const cost = (kwh * costPerKwh + standingCharge).toFixed(2);
         el.data('financial-value', `£${cost}`);
-        el.text(isEnergy ? `${kwh} kWH` : `£${cost}`);
+        el.text(isEnergy ? `${kwh} kWh` : `£${cost}`);
       }
     });
 
     Object.entries(subGrids).forEach(([key, [energy, finance]]) => {
       if (key === 'jint') {
-        // Jint uses one shared container — keep always visible
-        $(energy).show();
-        $(finance).hide(); // Just in case it exists, ensure it's hidden
+        $(energy).show(); // Always visible
+        $(finance).hide(); // Keep separate div hidden
       } else {
         $(energy).toggle(isEnergy);
         $(finance).toggle(!isEnergy);
@@ -48,14 +57,8 @@ $(document).ready(function () {
     renderChart(currentRange);
   }
 
-  function updatePlugState(isConnected) {
-    const badge = $('.plug-state');
-    badge.text(isConnected ? 'ON' : 'OFF');
-    badge.removeClass('bg-success bg-danger');
-    badge.addClass(isConnected ? 'bg-success' : 'bg-danger');
-  }  
-
   function renderChart(range = 'week') {
+    const { costPerKwh, standingCharge } = getTariffSettings();
     const isEnergy = !$('#metricsToggle').is(':checked');
     const canvasId = isEnergy ? 'rasyidChartEnergy' : 'rasyidChartFinance';
     const ctx = document.getElementById(canvasId)?.getContext('2d');
@@ -63,7 +66,9 @@ $(document).ready(function () {
 
     const data = usageMockData[range];
     const labels = data?.labels || ['No data'];
-    const values = isEnergy ? data?.kwh : data?.kwh.map(val => +(val * COST_PER_KWH).toFixed(2));
+    const values = isEnergy
+      ? data?.kwh
+      : data?.kwh.map(val => +(val * costPerKwh + standingCharge).toFixed(2));
 
     if (rasyidChart) rasyidChart.destroy();
 
@@ -104,7 +109,7 @@ $(document).ready(function () {
     calendar.val(format(today));
   }
 
-  // Kiran's Chart - Energy and Financial Toggle
+  // Kiran's Chart (dynamic unit)
   const canvas = document.getElementById('kiranLiveChart');
   if (canvas) {
     const ctx = canvas.getContext('2d');
@@ -153,9 +158,10 @@ $(document).ready(function () {
 
     async function updateKiranChart() {
       try {
+        const { costPerKwh } = getTariffSettings();
         const watts = await fetchLatest();
         const kW = watts / 1000;
-        const cost = +(kW * COST_PER_KWH).toFixed(2);
+        const cost = +(kW * costPerKwh).toFixed(2);
         const now = new Date();
         const isEnergy = !$('#metricsToggle').is(':checked');
 
@@ -188,9 +194,10 @@ $(document).ready(function () {
 
   async function updateMeters() {
     try {
+      const { costPerKwh } = getTariffSettings();
       const watts = await fetchLatest();
       const kW = watts / 1000;
-      const costPerHour = (kW * 0.2703).toFixed(2);
+      const costPerHour = (kW * costPerKwh).toFixed(2);
 
       $('#sol-energy .number').text(`${kW.toFixed(2)} kW`);
       $('#sol-finance .number').text(`£${costPerHour}/hr`);
@@ -210,6 +217,39 @@ $(document).ready(function () {
       console.error('Error updating meters:', err);
     }
   }
+
+  function showTariffModalIfNeeded() {
+    const tariffSet = localStorage.getItem('tariffSet') === 'true';
+    if (!tariffSet) {
+      const modal = new bootstrap.Modal(document.getElementById('tariffModal'));
+      modal.show();
+    }
+  }  
+
+  $('#tariffForm').on('submit', function (e) {
+    e.preventDefault();
+  
+    const rate = parseFloat($('#tariffRate').val());
+    const charge = parseFloat($('#standingCharge').val());
+  
+    if (!isNaN(rate) && !isNaN(charge)) {
+      localStorage.setItem('tariffRate', rate);
+      localStorage.setItem('standingCharge', charge);
+      localStorage.setItem('tariffSet', 'true'); // ✅ prevent future modal
+  
+      // Close modal cleanly
+      const modalEl = document.getElementById('tariffModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+  
+      // Apply without reload (optional)
+      updateTariffValues(); // optional helper if you're using live updates
+  
+      // Or refresh the page if needed:
+      // location.reload();
+    }
+  });
+  
 
   updateMeters();
   setInterval(updateMeters, 5000);
