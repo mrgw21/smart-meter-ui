@@ -178,13 +178,14 @@ $(document).ready(function () {
     setInterval(updateKiranChart, 5000);
   }
 
-  // Attach range button click
   $('#rangeButtons button').on('click', function () {
     $('#rangeButtons button').removeClass('active');
     $(this).addClass('active');
+  
     currentRange = $(this).data('range');
     renderChart(currentRange);
-  });
+  }); 
+  
 
   // Load mock data
   $.getJSON('data/usagebetween.json', function (data) {
