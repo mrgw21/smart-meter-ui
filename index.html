@@ -8,6 +8,11 @@
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Chart.js and Luxon adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
 </head>
 <body>
   <div class="container py-4">
@@ -48,7 +53,10 @@
           <div class="col-12">
             <div class="border p-3">
               <strong>Kiran’s grid</strong>
-              <div id="kiran-energy">Energy metrics view</div>
+              <div id="kiran-energy">
+                <p>Energy metrics view</p>
+                <canvas id="kiranLiveChart" width="800" height="300"></canvas>
+              </div>
               <div id="kiran-finance" style="display: none;">Financial metrics view</div>
             </div>
           </div>
@@ -60,49 +68,31 @@
                 <div class="row text-center g-3">
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
-                      <div class="fw-semibold metric-label"
-                          data-energy="Plug state"
-                          data-financial="Plug status">Plug state</div>
+                      <div class="fw-semibold metric-label" data-energy="Plug state" data-financial="Plug status">Plug state</div>
                       <div class="mt-2">
-                        <span class="badge fs-5 plug-state metric-value"
-                              data-energy-value="ON"
-                              data-financial-value="OFF"
-                              data-on-class="bg-success"
-                              data-off-class="bg-danger">ON</span>
+                        <span class="badge fs-5 plug-state metric-value" data-energy-value="ON" data-financial-value="OFF" data-on-class="bg-success" data-off-class="bg-danger">ON</span>
                       </div>
                     </div>
                   </div>
 
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
-                      <div class="fw-semibold metric-label" 
-                          data-energy="Uptime" 
-                          data-financial="Daily Cost">Uptime</div>
-                      <div class="mt-2 fs-5 metric-value" 
-                          data-energy-value="6 h 12m" 
-                          data-financial-value="£0.52">6 h 12m</div>
+                      <div class="fw-semibold metric-label" data-energy="Uptime" data-financial="Daily Cost">Uptime</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="6 h 12m" data-financial-value="£0.52">6 h 12m</div>
                     </div>
                   </div>
 
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
-                      <div class="fw-semibold metric-label"
-                          data-energy="Total today"
-                          data-financial="Monthly cost">Total today</div>
-                      <div class="mt-2 fs-5 metric-value"
-                          data-energy-value="0.79 kWH"
-                          data-financial-value="£5.20">0.79 kWH</div>
+                      <div class="fw-semibold metric-label" data-energy="Total today" data-financial="Monthly cost">Total today</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0.79 kWH" data-financial-value="£5.20">0.79 kWH</div>
                     </div>
                   </div>
 
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
-                      <div class="fw-semibold metric-label"
-                          data-energy="Daily Average"
-                          data-financial="Daily Average Cost">Daily Average</div>
-                      <div class="mt-2 fs-5 metric-value"
-                          data-energy-value="0.79 kWH"
-                          data-financial-value="£3.20">0.81 kWH</div>
+                      <div class="fw-semibold metric-label" data-energy="Daily Average" data-financial="Daily Average Cost">Daily Average</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0.79 kWH" data-financial-value="£3.20">0.81 kWH</div>
                     </div>
                   </div>
 
@@ -128,7 +118,7 @@
           <div class="col-12">
             <div class="border p-3">
               <strong>Rasyid’s grid</strong>
-              <!-- Buttons for range selection -->
+
               <div class="d-flex justify-content-between align-items-center mt-3 mb-3 flex-wrap gap-2">
                 <div class="btn-group" role="group" id="rangeButtons">
                   <button class="btn btn-outline-primary" data-range="week">Week</button>
@@ -136,24 +126,20 @@
                   <button class="btn btn-outline-primary" data-range="year">Year</button>
                 </div>
 
-                <!-- Single calendar date picker -->
                 <div class="d-flex align-items-center">
                   <input type="date" class="form-control" id="customDate" />
                 </div>
               </div>
 
-              <!-- Chart Canvas for Energy Metrics -->
               <div id="rasyid-energy">
-                <canvas id="rasyidChartEnergy" height="200"></canvas>
+                <canvas id="rasyidChartEnergy" width="800" height="300"></canvas>
               </div>
 
-              <!-- Chart Canvas for Financial Metrics -->
               <div id="rasyid-finance" style="display: none;">
-                <canvas id="rasyidChartFinance" height="200"></canvas>
+                <canvas id="rasyidChartEnergy" width="800" height="300"></canvas>
               </div>
             </div>
           </div> 
-
         </div>              
       </div>
     </div>
@@ -161,9 +147,7 @@
 
   <!-- Scripts (ORDER MATTERS) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/main.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
