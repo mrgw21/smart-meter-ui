@@ -2,8 +2,8 @@ import { fetchLatest } from './api.js';
 
 $(document).ready(function () {
   const toggle = $('#metricsToggle');
+  const COST_PER_KWH = 0.2703;
 
-  // Grid sections: energy and financial views
   const subGrids = {
     sol: ['#sol-energy', '#sol-finance'],
     kiran: ['#kiran-energy', '#kiran-finance'],
@@ -15,39 +15,46 @@ $(document).ready(function () {
   let usageMockData = {};
   let currentRange = 'week';
 
-  // Toggle energy/financial mode
   function switchMode(mode) {
     const isEnergy = mode === 'energy';
 
-    Object.values(subGrids).forEach(([energySelector, financeSelector]) => {
-      $(energySelector).toggle(isEnergy);
-      $(financeSelector).toggle(!isEnergy);
-    });
-
-    // Update Jint’s metric labels and values
     $('.metric-label').each(function () {
       const label = $(this);
       label.text(isEnergy ? label.data('energy') : label.data('financial'));
     });
 
     $('.metric-value').each(function () {
-      const value = $(this);
-      value.text(isEnergy ? value.data('energy-value') : value.data('financial-value'));
+      const el = $(this);
+      const kwh = parseFloat(el.data('energy-value'));
+      if (!isNaN(kwh)) {
+        const cost = (kwh * COST_PER_KWH).toFixed(2);
+        el.data('financial-value', `£${cost}`);
+        el.text(isEnergy ? `${kwh} kWH` : `£${cost}`);
+      }
     });
 
-    // Plug state badge toggle
-    $('.plug-state').each(function () {
-      const badge = $(this);
-      badge.text(isEnergy ? badge.data('energy-value') : badge.data('financial-value'));
-      badge.toggleClass(badge.data('on-class'), isEnergy);
-      badge.toggleClass(badge.data('off-class'), !isEnergy);
+    Object.entries(subGrids).forEach(([key, [energy, finance]]) => {
+      if (key === 'jint') {
+        // Jint uses one shared container — keep always visible
+        $(energy).show();
+        $(finance).hide(); // Just in case it exists, ensure it's hidden
+      } else {
+        $(energy).toggle(isEnergy);
+        $(finance).toggle(!isEnergy);
+      }
     });
 
     localStorage.setItem('metricsMode', mode);
     renderChart(currentRange);
   }
 
-  // Chart for Rasyid's grid
+  function updatePlugState(isConnected) {
+    const badge = $('.plug-state');
+    badge.text(isConnected ? 'ON' : 'OFF');
+    badge.removeClass('bg-success bg-danger');
+    badge.addClass(isConnected ? 'bg-success' : 'bg-danger');
+  }  
+
   function renderChart(range = 'week') {
     const isEnergy = !$('#metricsToggle').is(':checked');
     const canvasId = isEnergy ? 'rasyidChartEnergy' : 'rasyidChartFinance';
@@ -56,7 +63,7 @@ $(document).ready(function () {
 
     const data = usageMockData[range];
     const labels = data?.labels || ['No data'];
-    const values = data?.values || [0];
+    const values = isEnergy ? data?.kwh : data?.kwh.map(val => +(val * COST_PER_KWH).toFixed(2));
 
     if (rasyidChart) rasyidChart.destroy();
 
@@ -65,39 +72,39 @@ $(document).ready(function () {
       data: {
         labels,
         datasets: [{
-          label: 'Usage (kWh)',
+          label: isEnergy ? 'Usage (kWh)' : 'Cost (£)',
           data: values,
-          backgroundColor: 'rgba(75, 192, 192, 0.5)',   // 💡 teal fill
-          borderColor: 'rgba(75, 192, 192, 1)',         // 💡 teal border
+          backgroundColor: 'rgba(75, 192, 192, 0.5)',
+          borderColor: 'rgba(75, 192, 192, 1)',
           borderWidth: 1
         }]
       },
       options: {
         responsive: true,
         scales: {
-          y: { beginAtZero: true }
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: val => isEnergy ? `${val} kWh` : `£${val}`
+            }
+          }
         }
       }
-    });    
+    });
   }
 
-  // Setup calendar (past 30 days)
   function setupDatePicker() {
     const calendar = $('#customDate');
     const today = new Date();
     const min = new Date(today);
     min.setDate(min.getDate() - 30);
-
-    function format(d) {
-      return d.toISOString().split('T')[0];
-    }
-
+    const format = d => d.toISOString().split('T')[0];
     calendar.attr('min', format(min));
     calendar.attr('max', format(today));
     calendar.val(format(today));
   }
 
-  // Kiran's live chart
+  // Kiran's Chart - Energy and Financial Toggle
   const canvas = document.getElementById('kiranLiveChart');
   if (canvas) {
     const ctx = canvas.getContext('2d');
@@ -105,24 +112,24 @@ $(document).ready(function () {
       labels: [],
       datasets: [
         {
-          label: "Kiran's Live Power Usage (kW)",
+          label: 'Live Power Usage (kW)',
           data: [],
-          fill: false,
           borderColor: 'rgb(75, 192, 192)',
-          tension: 0.4,
+          fill: false,
+          tension: 0.4
         },
         {
-          label: 'Average Power Usage (kW)',
+          label: 'Average Usage (kW)',
           data: [],
-          fill: true,
           backgroundColor: 'rgba(75, 192, 192, 0.2)',
           borderColor: 'rgba(75, 192, 192, 0.6)',
-          tension: 0.4,
-        },
-      ],
+          fill: true,
+          tension: 0.4
+        }
+      ]
     };
 
-    const config = {
+    const kiranChart = new Chart(ctx, {
       type: 'line',
       data,
       options: {
@@ -140,26 +147,24 @@ $(document).ready(function () {
             beginAtZero: true,
             title: { display: true, text: 'Power (kW)' }
           }
-        },
-        plugins: {
-          legend: { display: true }
         }
       }
-    };
-
-    const kiranChart = new Chart(ctx, config);
+    });
 
     async function updateKiranChart() {
       try {
         const watts = await fetchLatest();
         const kW = watts / 1000;
+        const cost = +(kW * COST_PER_KWH).toFixed(2);
         const now = new Date();
+        const isEnergy = !$('#metricsToggle').is(':checked');
 
+        const value = isEnergy ? kW : cost;
         data.labels.push(now);
-        data.datasets[0].data.push(kW);
+        data.datasets[0].data.push(value);
 
         const avg = data.datasets[0].data.reduce((a, b) => a + b, 0) / data.datasets[0].data.length;
-        data.datasets[1].data.push(avg);
+        data.datasets[1].data.push(+avg.toFixed(2));
 
         const cutoff = new Date(now.getTime() - 2 * 60 * 1000);
         while (data.labels[0] < cutoff) {
@@ -168,6 +173,9 @@ $(document).ready(function () {
           data.datasets[1].data.shift();
         }
 
+        kiranChart.data.datasets[0].label = isEnergy ? 'Live Power Usage (kW)' : 'Live Cost (£/hr)';
+        kiranChart.data.datasets[1].label = isEnergy ? 'Average Usage (kW)' : 'Avg Cost (£/hr)';
+        kiranChart.options.scales.y.title.text = isEnergy ? 'Power (kW)' : 'Cost (£/hr)';
         kiranChart.update();
       } catch (err) {
         console.error('Error updating Kiran chart:', err);
@@ -178,16 +186,41 @@ $(document).ready(function () {
     setInterval(updateKiranChart, 5000);
   }
 
+  async function updateMeters() {
+    try {
+      const watts = await fetchLatest();
+      const kW = watts / 1000;
+      const costPerHour = (kW * 0.2703).toFixed(2);
+
+      $('#sol-energy .number').text(`${kW.toFixed(2)} kW`);
+      $('#sol-finance .number').text(`£${costPerHour}/hr`);
+
+      const maxPower = 5;
+      const maxCost = 2;
+      const powerRotation = Math.min(180, (kW / maxPower) * 180);
+      const costRotation = Math.min(180, (costPerHour / maxCost) * 180);
+
+      $('#sol-energy .needle').css('transform', `rotate(${powerRotation}deg)`);
+      $('#sol-finance .needle').css('transform', `rotate(${costRotation}deg)`);
+
+      const getRiskLevel = deg => deg < 60 ? 'LOW' : deg < 120 ? 'MEDIUM' : 'HIGH';
+      $('#sol-energy .label').text(`Usage: ${getRiskLevel(powerRotation)}`);
+      $('#sol-finance .label').text(`Cost: ${getRiskLevel(costRotation)}`);
+    } catch (err) {
+      console.error('Error updating meters:', err);
+    }
+  }
+
+  updateMeters();
+  setInterval(updateMeters, 5000);
+
   $('#rangeButtons button').on('click', function () {
     $('#rangeButtons button').removeClass('active');
     $(this).addClass('active');
-  
     currentRange = $(this).data('range');
     renderChart(currentRange);
-  }); 
-  
+  });
 
-  // Load mock data
   $.getJSON('data/usagebetween.json', function (data) {
     usageMockData = data;
     setupDatePicker();
@@ -197,7 +230,6 @@ $(document).ready(function () {
     $('#rangeButtons button[data-range="week"]').trigger('click');
   });
 
-  // Toggle switch
   toggle.on('change', function () {
     const mode = $(this).is(':checked') ? 'financial' : 'energy';
     switchMode(mode);
