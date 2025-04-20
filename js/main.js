@@ -1,6 +1,22 @@
 import { fetchLatest, fetchAvg24h } from './api.js';
 
+let highPowerCostNotified = false;
+
 $(document).ready(function () {
+
+  $('#testNotificationBtn').on('click', function () { // Notification test button 
+    const message = `🔔 Test notification triggered at ${new Date().toLocaleTimeString()}`;
+    toastr.info(message);
+    addNotificationToTray(message, 'info');
+  });
+  
+
+  toastr.options = { // Notification settings
+    "positionClass": "toast-bottom-right",
+    "timeOut": "10000", // Currently set to 10s
+    "progressBar": true
+  };
+
   $('#tariffRate').val(localStorage.getItem('tariffRate') || '0.2703');
   $('#standingCharge').val(localStorage.getItem('standingCharge') || '0.00');
   showTariffModalIfNeeded();
@@ -106,7 +122,7 @@ $(document).ready(function () {
       $('#sessionAvgPower').text(`${sessionAvgPower} W`);
       $('#sessionTotalKwh').text(`${sessionTotalKwh} kWh`);
       $('#sessionCost').text(`£${sessionCost}`);
-  
+    
     } catch (err) {
       console.error('Error updating Bryce grid:', err);
       // Optionally set default/error values in the UI
@@ -276,6 +292,19 @@ $(document).ready(function () {
       const getRiskLevel = deg => deg < 60 ? 'LOW' : deg < 120 ? 'MEDIUM' : 'HIGH';
       $('#sol-energy .label').text(`Usage: ${getRiskLevel(powerRotation)}`);
       $('#sol-finance .label').text(`Cost: ${getRiskLevel(costRotation)}`);
+
+      if (parseFloat(costPerHour) > 25) {
+        if (!highPowerCostNotified) {
+          const message = `⚠️ High power usage: £${costPerHour}/hr`;
+          toastr.warning(message);
+          addNotificationToTray(message, 'warning');
+          highPowerCostNotified = true;
+        }
+      } else {
+        highPowerCostNotified = false;
+      }
+      
+      
     } catch (err) {
       console.error('Error updating meters:', err);
     }
@@ -337,4 +366,45 @@ $(document).ready(function () {
     const mode = $(this).is(':checked') ? 'financial' : 'energy';
     switchMode(mode);
   });
+
+  let notificationHistory = [];
+
+  function addNotificationToTray(message, level = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const entry = { message, level, timestamp };
+    notificationHistory.unshift(entry);
+
+    // Create notification HTML
+    const $notifItem = $(`
+      <div class="mb-2 p-2 border rounded bg-light">
+        <div class="small text-muted">${timestamp}</div>
+        <div>${message}</div>
+      </div>
+    `);
+    $('#notification-list').prepend($notifItem);
+    updateNotificationCounter();
+
+    // Send message to backend for WhatsApp alert
+    fetch('http://localhost:3000/api/send-whatsapp-alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
+    });
+  }
+
+  function updateNotificationCounter() {
+    const count = notificationHistory.length;
+    const $counter = $('#notification-count');
+    if (count > 0) {
+      $counter.text(count).show();
+    } else {
+      $counter.hide();
+    }
+  }
+
+  // Toggle the tray
+  $('#notification-bell').on('click', function () {
+    $('#notification-tray').toggle();
+});
+  
 });

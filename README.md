@@ -45,3 +45,9 @@ Use jQuery `.toggle()` logic already set up in `main.js` to switch between views
 
 ## Notes
 - The `data/` folder is currently retained for backup/dummy testing. All live data is fetched via API.
+
+## Notification System
+- To use the phone notification system, you must set up an account with Twilio and start up a Whatapp Sandbox.
+- After that create a .env file which will include your: TWILIO_SID, TWILIO_AUTH_TOKEN, MY_PHONE_NUMBER and PORT.
+- Run the server.js file and the UI.
+- Test using notification button.
