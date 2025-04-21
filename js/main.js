@@ -21,7 +21,7 @@ $(document).ready(function () {
     "progressBar": true
   };
 
-  $('#tariffRate').val(localStorage.getItem('tariffRate') || '0.2703');
+  $('#tariffRate').val(localStorage.getItem('tariffRate') || '0.27');
   $('#standingCharge').val(localStorage.getItem('standingCharge') || '0.00');
   showTariffModalIfNeeded();
   const toggle = $('#metricsToggle');
@@ -313,27 +313,25 @@ $(document).ready(function () {
   $('#tariffForm').on('submit', function (e) {
     e.preventDefault();
   
-    const rate = parseFloat($('#tariffRate').val());
-    const charge = parseFloat($('#standingCharge').val());
+    const rateRaw = $('#tariffRate').val().replace(',', '.');
+    const chargeRaw = $('#standingCharge').val().replace(',', '.');
   
-    if (!isNaN(rate) && !isNaN(charge)) {
-      localStorage.setItem('tariffRate', rate);
-      localStorage.setItem('standingCharge', charge);
-      localStorage.setItem('tariffSet', 'true'); // ✅ prevent future modal
+    const rate = parseFloat(rateRaw);
+    const charge = parseFloat(chargeRaw);
   
-      // Close modal cleanly
-      const modalEl = document.getElementById('tariffModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-  
-      // Apply without reload (optional)
-      updateTariffValues(); // optional helper if you're using live updates
-  
-      // Or refresh the page if needed:
-      // location.reload();
+    if (isNaN(rate) || isNaN(charge)) {
+      toastr.error('Please enter valid numeric values for both fields.');
+      return;
     }
-  });
   
+    localStorage.setItem('tariffRate', rate.toFixed(4));
+    localStorage.setItem('standingCharge', charge.toFixed(2));
+    localStorage.setItem('tariffSet', 'true');
+  
+    const modalEl = document.getElementById('tariffModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+  });  
 
   updateMeters();
   setInterval(updateMeters, 5000);
