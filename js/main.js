@@ -253,6 +253,55 @@ $(document).ready(function () {
     }
   }
 
+  async function updateJintGrid() {
+    try {
+      const { costPerKwh, standingCharge } = getTariffSettings();
+      const mW = await fetchLatest(); // in milliwatts
+      const kW = mW / 1000;
+      const kWh = +(kW).toFixed(2); // simulate for 1 hour session
+      const costPerHour = +(kW * costPerKwh).toFixed(2);
+      const costPerMonth = (costPerHour * 24 * 30).toFixed(2);
+      const dailyAvg = +(kWh * 0.9).toFixed(2); // fake logic
+      const monthlyAvg = +(kWh * 25).toFixed(2); // fake logic
+  
+      const values = {
+        uptime: kWh,
+        totalToday: kWh,
+        dailyAvg: dailyAvg,
+        totalMonth: kWh * 30,
+        monthlyAvg: monthlyAvg,
+      };
+  
+      const costValues = {
+        dailyCost: (dailyAvg * costPerKwh).toFixed(2),
+        monthlyCost: costPerMonth,
+      };
+  
+      // Update energy values
+      $('#jint-energy .metric-value').each(function () {
+        const el = $(this);
+        const label = el.prev('.metric-label').text().toLowerCase();
+        
+        let value = '0';
+        if (label.includes('uptime')) value = values.uptime.toFixed(2);
+        else if (label.includes('total today')) value = values.totalToday.toFixed(2);
+        else if (label.includes('daily avg')) value = values.dailyAvg.toFixed(2);
+        else if (label.includes('total this month')) value = values.totalMonth.toFixed(2);
+        else if (label.includes('monthly avg')) value = values.monthlyAvg.toFixed(2);
+  
+        const cost = (value * costPerKwh + standingCharge).toFixed(2);
+        el.attr('data-energy-value', value);
+        el.attr('data-financial-value', `£${cost}`);
+        
+        const isEnergy = !$('#metricsToggle').is(':checked');
+        el.text(isEnergy ? `${value} kWh` : `£${cost}`);
+      });
+  
+    } catch (err) {
+      console.error("Error updating Jint grid:", err);
+    }
+  }  
+
   function showTariffModalIfNeeded() {
     const tariffSet = localStorage.getItem('tariffSet') === 'true';
     if (!tariffSet) {
@@ -289,6 +338,22 @@ $(document).ready(function () {
   updateMeters();
   setInterval(updateMeters, 5000);
 
+  updateJintGrid();
+  setInterval(updateJintGrid, 10000); // Optional auto-refresh
+
+  const themeToggle = document.getElementById('theme-toggle');
+  const bellIcon = document.getElementById('bell-icon');
+
+  $('#themeToggle').on('click', function () {
+    $('body').toggleClass('dark-mode');
+  
+    const icon = $('#themeIcon');
+    const isDark = $('body').hasClass('dark-mode');
+  
+    icon.attr('src', isDark ? 'assets/icons/day-mode.png' : 'assets/icons/night-mode.png');
+  });
+
+
   $('#rangeButtons button').on('click', function () {
     $('#rangeButtons button').removeClass('active');
     $(this).addClass('active');
@@ -303,6 +368,7 @@ $(document).ready(function () {
     toggle.prop('checked', saved === 'financial');
     switchMode(saved);
     updateKiranChart();
+    updateJintGrid();
     $('#rangeButtons button[data-range="week"]').trigger('click');
   });
 
@@ -310,6 +376,7 @@ $(document).ready(function () {
     const mode = $(this).is(':checked') ? 'financial' : 'energy';
     switchMode(mode);
     updateKiranChart();
+    updateJintGrid();
   });
 
   let notificationHistory = [];
@@ -346,6 +413,33 @@ $(document).ready(function () {
       $counter.hide();
     }
   }
+  
+  function updateThemeIcon() {
+    const isDark = document.body.classList.contains('dark-mode');
+  
+    $('#themeIcon').attr('src', isDark
+      ? 'assets/icons/day-mode.png'
+      : 'assets/icons/night-mode.png');
+  
+    $('#bell-icon').attr('src', isDark
+      ? 'assets/icons/bell-dark-mode.png'
+      : 'assets/icons/bell.png');
+  
+    $('#power-icon').attr('src', isDark
+      ? 'assets/icons/power-dark-mode.png'
+      : 'assets/icons/power.png');
+  
+    $('#money-icon').attr('src', isDark
+      ? 'assets/icons/money-dark-mode.png'
+      : 'assets/icons/money.png');
+  }
+  
+  $('#themeToggle').on('click', function () {
+    $('body').toggleClass('dark-mode');
+    updateThemeIcon();
+  });
+
+  updateThemeIcon();
 
   // Toggle the tray
   $('#notification-bell').on('click', function () {

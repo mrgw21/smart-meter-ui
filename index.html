@@ -25,16 +25,33 @@
     <!-- Top Brand & Toggle -->
       <!-- Top Row -->
       <div class="row align-items-center my-3">
+        <!-- Title (Left) -->
         <div class="col-6">
-          <h4 class="fw-bold mb-0">Smart Meter | Monitoring Dashboard</h4> <!-- mb-0 removes extra bottom margin -->
+          <h4 class="fw-bold mb-0">Smart Meter | Monitoring Dashboard</h4>
         </div>
-        <div class="col-6 d-flex justify-content-end align-items-center">
+      
+        <!-- Theme + Notification + About (Right) -->
+        <div class="col-6 d-flex justify-content-end align-items-center gap-3">
+          <!-- About Icon -->
+          <a href="/about.html" class="about-icon" title="About">
+            <div class="circle">
+              <div class="icon-text">
+                <span class="icon-i">i</span>
+                <span class="label">doc</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- Theme Toggle -->
+          <button id="themeToggle" class="icon-btn">
+            <img id="themeIcon" src="assets/icons/night-mode.png" alt="Toggle Theme" style="height: 24px; width: 24px;">
+          </button>
+      
+          <!-- Notification -->
           <div id="notification-wrapper" style="position: relative;">
-            <button id="notification-bell" class="btn btn-light position-relative p-2" style="height: 40px; width: 40px;">
-              <img src="assets/icons/bell.png" alt="Notifications" style="height: 24px; width: 24px;">
-              <span id="notification-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                0
-              </span>            
+            <button id="notification-bell" class="icon-btn position-relative p-2">
+              <img id="bell-icon" src="assets/icons/bell.png" alt="Notifications" style="height: 24px; width: 24px;">
+              <span id="notification-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
             </button>
       
             <div id="notification-tray" class="shadow" style="
@@ -56,16 +73,15 @@
             </div>
           </div>
         </div>
-      </div>      
-                      
+      </div>                           
 
     <!-- Energy / Financial Toggle -->
     <div class="p-3 d-flex align-items-center gap-4">
-      <!-- Energy -->
-      <div class="text-center">
-        <img src="assets/icons/power.png" alt="Energy" style="height: 36px; width: 36px;">
-        <div class="small fw-semibold mt-1">Energy</div>
-      </div>
+     <!-- Energy -->
+    <div class="text-center">
+      <img id="power-icon" src="assets/icons/power.png" alt="Energy" style="height: 36px; width: 36px;">
+      <div class="small fw-semibold mt-1">Energy</div>
+    </div>
 
       <!-- Toggle -->
       <div class="form-check form-switch m-0 mt-1">
@@ -74,7 +90,7 @@
 
       <!-- Financial -->
       <div class="text-center">
-        <img src="assets/icons/money.png" alt="Financial" style="height: 36px; width: 36px; margin-left: -4px;">
+        <img id="money-icon" src="assets/icons/money.png" alt="Financial" style="height: 36px; width: 36px; margin-left: -4px;">
         <div class="small fw-semibold mt-1">Financial</div>
       </div>
     </div>
@@ -180,54 +196,61 @@
             <div class="border p-3">
               <div id="jint-energy" class="jint-metrics">
                 <div class="row text-center g-3">
+
+                  <!-- Plug State -->
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
                       <div class="fw-semibold">Plug state</div>
                       <div class="mt-2">
                         <span class="badge fs-5 plug-state bg-success">ON</span>
-                      </div>                      
+                      </div>
                     </div>
                   </div>
 
+                  <!-- Uptime -->
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
                       <div class="fw-semibold metric-label" data-energy="Uptime" data-financial="Daily Cost">Uptime</div>
-                      <div class="mt-2 fs-5 metric-value" data-energy-value="6.12" data-financial-value="">6.12</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
                     </div>
                   </div>
 
+                  <!-- Total Today -->
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
                       <div class="fw-semibold metric-label" data-energy="Total today" data-financial="Monthly Cost">Total today</div>
-                      <div class="mt-2 fs-5 metric-value" data-energy-value="0.79" data-financial-value="">0.79</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
                     </div>
                   </div>
 
+                  <!-- Daily Avg -->
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
                       <div class="fw-semibold metric-label" data-energy="Daily Avg" data-financial="Daily Avg Cost">Daily Avg</div>
-                      <div class="mt-2 fs-5 metric-value" data-energy-value="0.81" data-financial-value="">0.81</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
                     </div>
                   </div>
 
+                  <!-- Total This Month -->
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
                       <div class="fw-semibold metric-label" data-energy="Total this month" data-financial="Monthly Total">Total this month</div>
-                      <div class="mt-2 fs-5 metric-value" data-energy-value="24.37" data-financial-value="">24.37</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
                     </div>
                   </div>
 
+                  <!-- Monthly Avg -->
                   <div class="col-6 col-md-4">
                     <div class="border p-3">
                       <div class="fw-semibold metric-label" data-energy="Monthly Avg" data-financial="Monthly Avg">Monthly Avg</div>
-                      <div class="mt-2 fs-5 metric-value" data-energy-value="20.40" data-financial-value="">20.40</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
           </div>
-
 
           <!-- Rasyid -->
           <div class="col-12">
@@ -296,6 +319,26 @@
 
 <!-- Your Script -->
 <script src="js/main.js"></script>
+
+<script>
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+
+  function setTheme(dark) {
+    document.body.classList.toggle('dark-mode', dark);
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    themeIcon.src = dark ? 'assets/icons/day-mode.png' : 'assets/icons/night-mode.png';
+  }
+
+  // Load saved theme
+  const savedTheme = localStorage.getItem('theme') === 'dark';
+  setTheme(savedTheme);
+
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.body.classList.contains('dark-mode');
+    setTheme(!isDark);
+  });
+</script>
 
 </body>
 </html>
