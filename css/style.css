@@ -43,3 +43,30 @@ body {
   background-color: #dee2e6;
   border-color: #ced4da;
 }
+
+#rangeButtons .btn {
+  border-radius: 30px;
+  padding: 6px 18px;         /* Smaller padding */
+  font-size: 0.9rem;         /* Smaller text */
+  font-weight: 600;
+  background-color: #ffffff;
+  color: #000;
+  border: 2px solid #000;
+  margin-right: 10px;        /* Add spacing between buttons */
+  transition: background-color 0.2s, color 0.2s;
+}
+
+#rangeButtons .btn:last-child {
+  margin-right: 0;           /* Prevent extra space after last button */
+}
+
+#rangeButtons .btn:hover {
+  background-color: #f0f0f0;
+}
+
+#rangeButtons .btn.active {
+  background-color: #66c6c6;
+  color: white;
+  border-color: #66c6c6;
+}
+
