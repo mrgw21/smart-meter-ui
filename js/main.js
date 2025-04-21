@@ -165,6 +165,7 @@ $(document).ready(function () {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           y: {
             beginAtZero: true,
@@ -218,6 +219,7 @@ $(document).ready(function () {
       data,
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         animation: false,
         scales: {
           x: {
@@ -359,12 +361,14 @@ $(document).ready(function () {
     const saved = localStorage.getItem('metricsMode') || 'energy';
     toggle.prop('checked', saved === 'financial');
     switchMode(saved);
+    updateKiranChart();
     $('#rangeButtons button[data-range="week"]').trigger('click');
   });
 
   toggle.on('change', function () {
     const mode = $(this).is(':checked') ? 'financial' : 'energy';
     switchMode(mode);
+    updateKiranChart();
   });
 
   let notificationHistory = [];
@@ -406,5 +410,12 @@ $(document).ready(function () {
   $('#notification-bell').on('click', function () {
     $('#notification-tray').toggle();
 });
-  
+
+window.addEventListener('resize', () => {
+  for (const id in Chart.instances) {
+    const chart = Chart.instances[id];
+    if (chart) chart.resize();
+  }
+});
+
 });
