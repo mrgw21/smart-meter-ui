@@ -1,8 +1,12 @@
 import { fetchLatest, fetchAvg24h } from './api.js';
+import { updateBryceGrid } from './current.js';
 
 let highPowerCostNotified = false;
 
 $(document).ready(function () {
+
+  updateBryceGrid();
+  setInterval(updateBryceGrid, 5000);
 
   $('#testNotificationBtn').on('click', function () { // Notification test button 
     const message = `🔔 Test notification triggered at ${new Date().toLocaleTimeString()}`;
@@ -72,69 +76,6 @@ $(document).ready(function () {
     localStorage.setItem('metricsMode', mode);
     renderChart(currentRange);
   }
-
-  async function updateBryceGrid() {
-    try {
-      // Get tariff settings
-      const { costPerKwh, standingCharge } = getTariffSettings();
-      
-      // Fetch latest power and average data from the API
-      const mW = await fetchLatest();  // Power in mW
-      const avgData = await fetchAvg24h();  // Last 24-hour average data
-  
-      // Calculate the cost for the Bryce Grid sections
-      const atThisPower = (mW / 1000).toFixed(2); // Convert mW to W
-      const atThisPowerCost = ((atThisPower / 1000) * costPerKwh).toFixed(2); // Cost per hour
-      const atThisPowerCostDay = (atThisPowerCost * 24).toFixed(2); // Cost per day
-      const atThisPowerCostWeek = (atThisPowerCost * 24 * 7).toFixed(2); // Cost per week
-      const atThisPowerCostMonth = (atThisPowerCost * 24 * 30).toFixed(2); // Cost per month
-  
-      // Last 24-hour Average Power and Costs
-      const avgPower = avgData && avgData.length > 0 ? (avgData[0] / 1000).toFixed(2) : '0.00'; // Handle undefined case
-      const avgCostDay = ((avgPower / 1000) * costPerKwh * 24).toFixed(2); // Cost per day
-      const avgCostMonth = (avgCostDay * 30).toFixed(2); // Cost per month
-  
-      // Standing Charge and Total
-      const standingChargeMonth = standingCharge.toFixed(2);
-      const totalCostMonth = (parseFloat(avgCostMonth) + parseFloat(standingChargeMonth)).toFixed(2);
-  
-      // Session data (simplified for now)
-      const sessionAvgPower = (mW / 1000).toFixed(2);
-      const sessionTotalKwh = ((sessionAvgPower / 1000) * 1).toFixed(6); // Assuming 1 hour session
-      const sessionCost = (sessionTotalKwh * costPerKwh).toFixed(2);
-      const sessionDuration = '1h 5m 10s'; // Placeholder
-  
-      // Update the Bryce Grid UI
-      $('#atThisPower').text(`${atThisPower} W`);
-      $('#atThisPowerCost').text(`£${atThisPowerCost}/hr`);
-      $('#atThisPowerCostDay').text(`£${atThisPowerCostDay}/day`);
-      $('#atThisPowerCostWeek').text(`£${atThisPowerCostWeek}/week`);
-      $('#atThisPowerCostMonth').text(`£${atThisPowerCostMonth}/month`);
-  
-      $('#avgPower').text(`${avgPower} W`);
-      $('#avgCostDay').text(`£${avgCostDay}/day`);
-      $('#avgCostMonth').text(`£${avgCostMonth}/month`);
-  
-      $('#standingChargeMonth').text(`£${standingChargeMonth}/month`);
-      $('#totalCostMonth').text(`£${totalCostMonth}/month`);
-  
-      $('#sessionDuration').text(sessionDuration);
-      $('#sessionAvgPower').text(`${sessionAvgPower} W`);
-      $('#sessionTotalKwh').text(`${sessionTotalKwh} kWh`);
-      $('#sessionCost').text(`£${sessionCost}`);
-    
-    } catch (err) {
-      console.error('Error updating Bryce grid:', err);
-      // Optionally set default/error values in the UI
-      $('#avgPower').text('0.00 W');
-      $('#avgCostDay').text('£0.00/day');
-      $('#avgCostMonth').text('£0.00/month');
-    }
-  }
-
-  // Update Bryce Grid every 5 seconds
-  updateBryceGrid();
-  setInterval(updateBryceGrid, 5000);
 
   function renderChart(range = 'week') {
     const { costPerKwh, standingCharge } = getTariffSettings();

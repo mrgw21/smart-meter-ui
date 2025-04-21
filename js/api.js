@@ -1,14 +1,34 @@
 const BASE_URL = "https://zerzvoaj5w4euyxnmcipehvgfy0nyllg.lambda-url.eu-west-2.on.aws";
 
+/**
+ * Fetch the latest power usage in milliwatts (mW).
+ * Returns: Number (e.g., 72623 for 72.623W)
+ */
 export async function fetchLatest() {
-  const res = await fetch(`${BASE_URL}/latest`);
-  const [[ts, , mW]] = await res.json();
-  return mW;
+  try {
+    const res = await fetch(`${BASE_URL}/latest`);
+    const data = await res.json();
+    const [[timestamp, , mW]] = data; // [timestamp, device_id, milliwatts]
+    return mW;
+  } catch (err) {
+    console.error("fetchLatest failed:", err);
+    return 0;
+  }
 }
 
+/**
+ * Fetch average power usage (in mW) over the past 24 hours.
+ * Returns: Array with one number (e.g., [165330] for 165.33W)
+ */
 export async function fetchAvg24h() {
-  const now = Date.now();
-  const dayAgo = now - 24 * 3600 * 1000;
-  const res = await fetch(`${BASE_URL}/avgbetween/${Math.floor(dayAgo)}/${Math.floor(now)}`);
-  return await res.json();
+  try {
+    const now = Date.now();
+    const dayAgo = now - 24 * 3600 * 1000;
+    const res = await fetch(`${BASE_URL}/avgbetween/${Math.floor(dayAgo)}/${Math.floor(now)}`);
+    const data = await res.json(); // Expecting [mW]
+    return data;
+  } catch (err) {
+    console.error("fetchAvg24h failed:", err);
+    return [0];
+  }
 }
