@@ -16,7 +16,7 @@ $(document).ready(function () {
   
 
   toastr.options = { // Notification settings
-    "positionClass": "toast-bottom-right",
+    "positionClass": "toast-top-center",
     "timeOut": "10000", // Currently set to 10s
     "progressBar": true
   };
