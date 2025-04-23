@@ -19,7 +19,7 @@ export async function fetchLatest() {
     const res = await fetch(`${BASE_URL}/latest/${deviceId}`);
     const data = await res.json();
     console.log(data);
-    return data.wattage * 1000;
+    return data.wattage;
   } catch (err) {
     console.error("fetchLatest failed:", err);
     return 0;

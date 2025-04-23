@@ -8,16 +8,15 @@ $(document).ready(function () {
   updateBryceGrid();
   setInterval(updateBryceGrid, 5000);
 
-  $('#testNotificationBtn').on('click', function () { // Notification test button 
+  $('#testNotificationBtn').on('click', function () {
     const message = `🔔 Test notification triggered at ${new Date().toLocaleTimeString()}`;
     toastr.info(message);
     addNotificationToTray(message, 'info');
   });
-  
 
-  toastr.options = { // Notification settings
+  toastr.options = {
     "positionClass": "toast-top-center",
-    "timeOut": "10000", // Currently set to 10s
+    "timeOut": "10000",
     "progressBar": true
   };
 
@@ -55,18 +54,18 @@ $(document).ready(function () {
 
     $('.metric-value').each(function () {
       const el = $(this);
-      const kwh = parseFloat(el.data('energy-value'));
-      if (!isNaN(kwh)) {
-        const cost = (kwh * costPerKwh + standingCharge).toFixed(2);
+      const watt = parseFloat(el.data('energy-value'));
+      if (!isNaN(watt)) {
+        const cost = (watt * costPerKwh + standingCharge).toFixed(2);
         el.data('financial-value', `£${cost}`);
-        el.text(isEnergy ? `${kwh} kWh` : `£${cost}`);
+        el.text(isEnergy ? `${watt} W` : `£${cost}`);
       }
     });
 
     Object.entries(subGrids).forEach(([key, [energy, finance]]) => {
       if (key === 'jint') {
-        $(energy).show(); // Always visible
-        $(finance).hide(); // Keep separate div hidden
+        $(energy).show();
+        $(finance).hide();
       } else {
         $(energy).toggle(isEnergy);
         $(finance).toggle(!isEnergy);
@@ -87,7 +86,7 @@ $(document).ready(function () {
     const data = usageMockData[range];
     const labels = data?.labels || ['No data'];
     const values = isEnergy
-      ? data?.kwh
+      ? data?.kwh // Assuming your mock data is in W already
       : data?.kwh.map(val => +(val * costPerKwh + standingCharge).toFixed(2));
 
     if (rasyidChart) rasyidChart.destroy();
@@ -97,7 +96,7 @@ $(document).ready(function () {
       data: {
         labels,
         datasets: [{
-          label: isEnergy ? 'Usage (kWh)' : 'Cost (£)',
+          label: isEnergy ? 'Usage (W)' : 'Cost (£)',
           data: values,
           backgroundColor: 'rgba(75, 192, 192, 0.5)',
           borderColor: 'rgba(75, 192, 192, 1)',
@@ -111,7 +110,7 @@ $(document).ready(function () {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: val => isEnergy ? `${val} kWh` : `£${val}`
+              callback: val => isEnergy ? `${val} W` : `£${val}`
             }
           }
         }
@@ -138,14 +137,14 @@ $(document).ready(function () {
       labels: [],
       datasets: [
         {
-          label: 'Live Power Usage (kW)',
+          label: 'Live Power Usage (W)',
           data: [],
           borderColor: 'rgb(75, 192, 192)',
           fill: false,
           tension: 0.4
         },
         {
-          label: 'Average Usage (kW)',
+          label: 'Average Usage (W)',
           data: [],
           backgroundColor: 'rgba(75, 192, 192, 0.2)',
           borderColor: 'rgba(75, 192, 192, 0.6)',
@@ -172,7 +171,7 @@ $(document).ready(function () {
           },
           y: {
             beginAtZero: true,
-            title: { display: true, text: 'Power (kW)' }
+            title: { display: true, text: 'Power (W)' }
           }
         }
       }
@@ -182,12 +181,11 @@ $(document).ready(function () {
       try {
         const { costPerKwh } = getTariffSettings();
         const watts = await fetchLatest();
-        const kW = watts / 1000;
-        const cost = +(kW * costPerKwh).toFixed(2);
+        const cost = +(watts * costPerKwh / 1000).toFixed(2); // Still per kWh
         const now = new Date();
         const isEnergy = !$('#metricsToggle').is(':checked');
 
-        const value = isEnergy ? kW : cost;
+        const value = isEnergy ? watts : cost;
         data.labels.push(now);
         data.datasets[0].data.push(value);
 
@@ -201,9 +199,9 @@ $(document).ready(function () {
           data.datasets[1].data.shift();
         }
 
-        kiranChart.data.datasets[0].label = isEnergy ? 'Live Power Usage (kW)' : 'Live Cost (£/hr)';
-        kiranChart.data.datasets[1].label = isEnergy ? 'Average Usage (kW)' : 'Avg Cost (£/hr)';
-        kiranChart.options.scales.y.title.text = isEnergy ? 'Power (kW)' : 'Cost (£/hr)';
+        kiranChart.data.datasets[0].label = isEnergy ? 'Live Power Usage (W)' : 'Live Cost (£/hr)';
+        kiranChart.data.datasets[1].label = isEnergy ? 'Average Usage (W)' : 'Avg Cost (£/hr)';
+        kiranChart.options.scales.y.title.text = isEnergy ? 'Power (W)' : 'Cost (£/hr)';
         kiranChart.update();
       } catch (err) {
         console.error('Error updating Kiran chart:', err);
@@ -217,16 +215,15 @@ $(document).ready(function () {
   async function updateMeters() {
     try {
       const { costPerKwh } = getTariffSettings();
-      const watts = await fetchLatest() / 1000;
-      const kW = watts / 1000;
-      const costPerHour = (kW * costPerKwh).toFixed(2);
+      const watts = await fetchLatest();
+      const costPerHour = (watts * costPerKwh / 1000).toFixed(2);
 
-      $('#sol-energy .number').text(`${kW.toFixed(2)} kW`);
+      $('#sol-energy .number').text(`${watts.toFixed(2)} W`);
       $('#sol-finance .number').text(`£${costPerHour}/hr`);
 
-      const maxPower = 5;
+      const maxPower = 5000; // W
       const maxCost = 2;
-      const powerRotation = Math.min(180, (kW / maxPower) * 180);
+      const powerRotation = Math.min(180, (watts / maxPower) * 180);
       const costRotation = Math.min(180, (costPerHour / maxCost) * 180);
 
       $('#sol-energy .needle').css('transform', `rotate(${powerRotation}deg)`);
@@ -246,8 +243,6 @@ $(document).ready(function () {
       } else {
         highPowerCostNotified = false;
       }
-      
-      
     } catch (err) {
       console.error('Error updating meters:', err);
     }
@@ -256,51 +251,44 @@ $(document).ready(function () {
   async function updateJintGrid() {
     try {
       const { costPerKwh, standingCharge } = getTariffSettings();
-      const mW = await fetchLatest(); // in milliwatts
-      const kW = mW / 1000;
-      const kWh = +(kW).toFixed(2); // simulate for 1 hour session
-      const costPerHour = +(kW * costPerKwh).toFixed(2);
+      const watts = await fetchLatest(); // in W
+      const costPerHour = +(watts * costPerKwh / 1000).toFixed(2);
       const costPerMonth = (costPerHour * 24 * 30).toFixed(2);
-      const dailyAvg = +(kWh * 0.9).toFixed(2); // fake logic
-      const monthlyAvg = +(kWh * 25).toFixed(2); // fake logic
-  
+      const dailyAvg = +(watts * 0.9).toFixed(2);
+      const monthlyAvg = +(watts * 25).toFixed(2);
+
       const values = {
-        uptime: kWh,
-        totalToday: kWh,
+        uptime: watts,
+        totalToday: watts,
         dailyAvg: dailyAvg,
-        totalMonth: kWh * 30,
+        totalMonth: watts * 30,
         monthlyAvg: monthlyAvg,
       };
-  
-      const costValues = {
-        dailyCost: (dailyAvg * costPerKwh).toFixed(2),
-        monthlyCost: costPerMonth,
-      };
-  
-      // Update energy values
+
+      // Energy values (now in W)
       $('#jint-energy .metric-value').each(function () {
         const el = $(this);
         const label = el.prev('.metric-label').text().toLowerCase();
-        
+
         let value = '0';
         if (label.includes('uptime')) value = values.uptime.toFixed(2);
         else if (label.includes('total today')) value = values.totalToday.toFixed(2);
         else if (label.includes('daily avg')) value = values.dailyAvg.toFixed(2);
         else if (label.includes('total this month')) value = values.totalMonth.toFixed(2);
         else if (label.includes('monthly avg')) value = values.monthlyAvg.toFixed(2);
-  
-        const cost = (value * costPerKwh + standingCharge).toFixed(2);
+
+        const cost = (value * costPerKwh / 1000 + standingCharge).toFixed(2);
         el.attr('data-energy-value', value);
         el.attr('data-financial-value', `£${cost}`);
-        
+
         const isEnergy = !$('#metricsToggle').is(':checked');
-        el.text(isEnergy ? `${value} kWh` : `£${cost}`);
+        el.text(isEnergy ? `${value} W` : `£${cost}`);
       });
-  
+
     } catch (err) {
       console.error("Error updating Jint grid:", err);
     }
-  }  
+  }
 
   function showTariffModalIfNeeded() {
     const tariffSet = localStorage.getItem('tariffSet') === 'true';
@@ -308,49 +296,48 @@ $(document).ready(function () {
       const modal = new bootstrap.Modal(document.getElementById('tariffModal'));
       modal.show();
     }
-  }  
+  }
 
   $('#tariffForm').on('submit', function (e) {
     e.preventDefault();
-  
+
     const rateRaw = $('#tariffRate').val().replace(',', '.');
     const chargeRaw = $('#standingCharge').val().replace(',', '.');
-  
+
     const rate = parseFloat(rateRaw);
     const charge = parseFloat(chargeRaw);
-  
+
     if (isNaN(rate) || isNaN(charge)) {
       toastr.error('Please enter valid numeric values for both fields.');
       return;
     }
-  
+
     localStorage.setItem('tariffRate', rate.toFixed(4));
     localStorage.setItem('standingCharge', charge.toFixed(2));
     localStorage.setItem('tariffSet', 'true');
-  
+
     const modalEl = document.getElementById('tariffModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) modal.hide();
-  });  
+  });
 
   updateMeters();
   setInterval(updateMeters, 5000);
 
   updateJintGrid();
-  setInterval(updateJintGrid, 10000); // Optional auto-refresh
+  setInterval(updateJintGrid, 10000);
 
   const themeToggle = document.getElementById('theme-toggle');
   const bellIcon = document.getElementById('bell-icon');
 
   $('#themeToggle').on('click', function () {
     $('body').toggleClass('dark-mode');
-  
+
     const icon = $('#themeIcon');
     const isDark = $('body').hasClass('dark-mode');
-  
+
     icon.attr('src', isDark ? 'assets/icons/day-mode.png' : 'assets/icons/night-mode.png');
   });
-
 
   $('#rangeButtons button').on('click', function () {
     $('#rangeButtons button').removeClass('active');
@@ -384,7 +371,6 @@ $(document).ready(function () {
     const entry = { message, level, timestamp };
     notificationHistory.unshift(entry);
 
-    // Create notification HTML
     const $notifItem = $(`
       <div class="mb-2 p-2 border rounded bg-light">
         <div class="small text-muted">${timestamp}</div>
@@ -394,7 +380,6 @@ $(document).ready(function () {
     $('#notification-list').prepend($notifItem);
     updateNotificationCounter();
 
-    // Send message to backend for WhatsApp alert
     fetch('http://localhost:3000/api/send-whatsapp-alert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -411,27 +396,27 @@ $(document).ready(function () {
       $counter.hide();
     }
   }
-  
+
   function updateThemeIcon() {
     const isDark = document.body.classList.contains('dark-mode');
-  
+
     $('#themeIcon').attr('src', isDark
       ? 'assets/icons/day-mode.png'
       : 'assets/icons/night-mode.png');
-  
+
     $('#bell-icon').attr('src', isDark
       ? 'assets/icons/bell-dark-mode.png'
       : 'assets/icons/bell.png');
-  
+
     $('#power-icon').attr('src', isDark
       ? 'assets/icons/power-dark-mode.png'
       : 'assets/icons/power.png');
-  
+
     $('#money-icon').attr('src', isDark
       ? 'assets/icons/money-dark-mode.png'
       : 'assets/icons/money.png');
   }
-  
+
   $('#themeToggle').on('click', function () {
     $('body').toggleClass('dark-mode');
     updateThemeIcon();
@@ -439,16 +424,15 @@ $(document).ready(function () {
 
   updateThemeIcon();
 
-  // Toggle the tray
   $('#notification-bell').on('click', function () {
     $('#notification-tray').toggle();
-});
+  });
 
-window.addEventListener('resize', () => {
-  for (const id in Chart.instances) {
-    const chart = Chart.instances[id];
-    if (chart) chart.resize();
-  }
-});
+  window.addEventListener('resize', () => {
+    for (const id in Chart.instances) {
+      const chart = Chart.instances[id];
+      if (chart) chart.resize();
+    }
+  });
 
 });
