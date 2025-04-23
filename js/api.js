@@ -1,12 +1,22 @@
 const BASE_URL = "https://j7pv6in5kmx37jsjuukn4k7ufy0wqeqr.lambda-url.eu-west-2.on.aws";
 
+function getDeviceIdFromUrl() {
+  const hash = window.location.hash; // e.g. "#/1"
+  if (hash.startsWith("#/")) {
+    const deviceId = hash.substring(2); // "1"
+    if (deviceId === "0" || deviceId === "1") return deviceId;
+  }
+  return "0";
+}
+const deviceId = getDeviceIdFromUrl();
+
 /**
  * Fetch the latest power usage in milliwatts (mW).
  * Returns: Number (e.g., 72623 for 72.623W)
  */
 export async function fetchLatest() {
   try {
-    const res = await fetch(`${BASE_URL}/latest/1`);
+    const res = await fetch(`${BASE_URL}/latest/${deviceId}`);
     const data = await res.json();
     console.log(data);
     return data.wattage * 1000;
