@@ -1,4 +1,4 @@
-const BASE_URL = "https://zerzvoaj5w4euyxnmcipehvgfy0nyllg.lambda-url.eu-west-2.on.aws";
+const BASE_URL = "https://j7pv6in5kmx37jsjuukn4k7ufy0wqeqr.lambda-url.eu-west-2.on.aws";
 
 /**
  * Fetch the latest power usage in milliwatts (mW).
@@ -6,10 +6,10 @@ const BASE_URL = "https://zerzvoaj5w4euyxnmcipehvgfy0nyllg.lambda-url.eu-west-2.
  */
 export async function fetchLatest() {
   try {
-    const res = await fetch(`${BASE_URL}/latest`);
+    const res = await fetch(`${BASE_URL}/latest/1`);
     const data = await res.json();
-    const [[timestamp, , mW]] = data; // [timestamp, device_id, milliwatts]
-    return mW;
+    console.log(data);
+    return data.wattage * 1000;
   } catch (err) {
     console.error("fetchLatest failed:", err);
     return 0;

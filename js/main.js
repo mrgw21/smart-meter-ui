@@ -217,7 +217,7 @@ $(document).ready(function () {
   async function updateMeters() {
     try {
       const { costPerKwh } = getTariffSettings();
-      const watts = await fetchLatest();
+      const watts = await fetchLatest() / 1000;
       const kW = watts / 1000;
       const costPerHour = (kW * costPerKwh).toFixed(2);
 
