@@ -151,7 +151,7 @@ export class lineChartAgainstTime {
         scales: {
           x: {
             type: "time",
-            time: { unit: "second" },
+            time: { unit: "hour" },
             // min: () => new Date(Date.now() - 2 * 60 * 1000),
             max: () => new Date(),
             title: { display: true, text: "Time" },
