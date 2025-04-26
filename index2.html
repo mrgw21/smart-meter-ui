@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Meter | Monitoring Dashboard</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/speedometer.css" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+
+  <!-- Chart.js + Luxon -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
+</head>
+<body>
+  <div class="container py-4">
+
+    <!-- Top Brand & Toggle -->
+      <!-- Top Row -->
+      <div class="row align-items-center my-3">
+        <!-- Title (Left) -->
+        <div class="col-6">
+          <h4 class="fw-bold mb-0">Smart Meter | Monitoring Dashboard</h4>
+        </div>
+      
+        <!-- Theme + Notification + About (Right) -->
+        <div class="col-6 d-flex justify-content-end align-items-center gap-3">
+          <!-- Wifi Buttoon -->
+          <a href="/wifi.html" class="about-icon" title="Home">
+            <div class="circle">
+              <div class="icon-text">
+                <span class="label">WiFi</span>
+              </div>
+            </div>
+          </a>
+          <!-- About Icon -->
+          <a href="/about.html" class="about-icon" title="About">
+            <div class="circle">
+              <div class="icon-text">
+                <span class="icon-i">i</span>
+                <span class="label">doc</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- Theme Toggle -->
+          <button id="themeToggle" class="icon-btn">
+            <img id="themeIcon" src="assets/icons/night-mode.png" alt="Toggle Theme" style="height: 24px; width: 24px;">
+          </button>
+      
+          <!-- Notification -->
+          <div id="notification-wrapper" style="position: relative;">
+            <button id="notification-bell" class="icon-btn position-relative p-2">
+              <img id="bell-icon" src="assets/icons/bell.png" alt="Notifications" style="height: 24px; width: 24px;">
+              <span id="notification-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+            </button>
+      
+            <div id="notification-tray" class="shadow" style="
+              display: none;
+              position: absolute;
+              top: 45px;
+              right: 0;
+              background: #fff;
+              border: 1px solid #ccc;
+              border-radius: 8px;
+              width: 300px;
+              max-height: 300px;
+              overflow-y: auto;
+              padding: 10px;
+              z-index: 999;
+            ">
+              <strong class="d-block mb-2">Notifications</strong>
+              <div id="notification-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>                           
+
+    <!-- Energy / Financial Toggle -->
+    <div class="p-3 d-flex align-items-center gap-4">
+     <!-- Energy -->
+    <div class="text-center">
+      <img id="power-icon" src="assets/icons/power.png" alt="Energy" style="height: 36px; width: 36px;">
+      <div class="small fw-semibold mt-1">Energy</div>
+    </div>
+
+      <!-- Toggle -->
+      <div class="form-check form-switch m-0 mt-1">
+        <input class="form-check-input" type="checkbox" id="metricsToggle" style="transform: scale(1.5);">
+      </div>
+
+      <!-- Financial -->
+      <div class="text-center">
+        <img id="money-icon" src="assets/icons/money.png" alt="Financial" style="height: 36px; width: 36px; margin-left: -4px;">
+        <div class="small fw-semibold mt-1">Financial</div>
+      </div>
+    </div>
+    
+    <!-- Grid Area -->
+    <div class="row g-3 mt-3">
+
+      <!-- Sol -->
+      <div class="col-md-4">
+        <div class="p-0">
+          <div id="sol-energy">
+            <div class="wrapper border-0">
+              <div class="gauge">
+                <div class="slice-colors">
+                  <div class="st slice-item"></div>
+                  <div class="st slice-item"></div>
+                  <div class="st slice-item"></div>
+                </div>
+                <div class="needle"></div>
+                <div class="gauge-center">
+                  <div class="label">Energy Usage</div>
+                  <div class="number">0.00 kW</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="sol-finance" style="display: none;">
+            <div class="wrapper border-0">
+              <div class="gauge">
+                <div class="slice-colors">
+                  <div class="st slice-item"></div>
+                  <div class="st slice-item"></div>
+                  <div class="st slice-item"></div>
+                </div>
+                <div class="needle"></div>
+                <div class="gauge-center">
+                  <div class="label">Cost Rate</div>
+                  <div class="number">£0.00/hr</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Section -->
+      <div class="col-md-8">
+        <div class="row g-3">
+
+          <!-- Kiran -->
+          <div class="col-12">
+            <div class="border p-3">
+              <div class="chart-container" style="height: 300px;">
+                <canvas id="kiranLiveChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bryce Grid -->
+          <div class="col-12">
+            <div class="border p-3 d-flex flex-wrap gap-3">
+
+              <!-- At This Power Section -->
+              <div class="border p-3 d-flex flex-column flex-fill">
+                <div class="fw-semibold">At This Power:</div>
+                <div class="fs-6"" id="atThisPower">0 W</div>
+                <div class="fs-6">LED Blinks every: <span id="ledBlinkRate">0</span></div>
+                <div class="fs-6"" id="atThisPowerCost">£0.00/hr</div>
+                <div class="fs-6" id="atThisPowerCostDay">£0.00/day</div>
+                <div class="fs-6" id="atThisPowerCostWeek">£0.00/week</div>
+                <div class="fs-6" id="atThisPowerCostMonth">£0.00/month</div>
+              </div>
+
+              <!-- Last 24hr Average Section -->
+              <div class="border p-3 d-flex flex-column flex-fill">
+                <div class="fw-semibold">Last 24hr Average:</div>
+                <div class="fs-6"" id="avgPower">0 W</div>
+                <div class="fs-6">Cost: <span id="avgCostDay">£0.00</span>/day</div>
+                <div class="fs-6">Cost: <span id="avgCostMonth">£0.00</span>/month</div>
+                <div class="fs-6"d">Standing Charge:</div>
+                <div class="fs-6" id="standingChargeMonth">£0.00/month</div>
+                <div class="fs-6">Total: <span id="totalCostMonth">£0.00</span>/month</div>
+              </div>
+
+              <!-- Session Section -->
+              <div class="border p-3 d-flex flex-column flex-fill">
+                <div class="fw-semibold">Session:</div>
+                <div class="fs-6" id="sessionDuration">(0h 0m 0s)</div>
+                <div class="fs-6" id="sessionAvgPower">0 W</div>
+                <div class="fs-6" id="sessionTotalKwh">0 kWh</div>
+                <div class="fs-6" id="sessionCost">£0.00</div>
+                <div class="fs-6"" id="sessionCostPerHour">£0.00/hr</div>
+                <div class="fs-6" id="sessionCostPerDay">£0.00/day</div>
+                <div class="fs-6" id="sessionCostPerWeek">£0.00/week</div>
+                <div class="fs-6" id="sessionCostPerMonth">£0.00/month</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Jint -->
+          <div class="col-12">
+            <div class="border p-3">
+              <div id="jint-energy" class="jint-metrics">
+                <div class="row text-center g-3">
+
+                  <!-- Plug State -->
+                  <div class="col-6 col-md-4">
+                    <div class="border p-3">
+                      <div class="fw-semibold">Plug state</div>
+                      <div class="mt-2">
+                        <span class="badge fs-5 plug-state bg-success">ON</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Uptime -->
+                  <div class="col-6 col-md-4">
+                    <div class="border p-3">
+                      <div class="fw-semibold metric-label" data-energy="Uptime" data-financial="Daily Cost">Uptime</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
+                    </div>
+                  </div>
+
+                  <!-- Total Today -->
+                  <div class="col-6 col-md-4">
+                    <div class="border p-3">
+                      <div class="fw-semibold metric-label" data-energy="Total today" data-financial="Monthly Cost">Total today</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
+                    </div>
+                  </div>
+
+                  <!-- Daily Avg -->
+                  <div class="col-6 col-md-4">
+                    <div class="border p-3">
+                      <div class="fw-semibold metric-label" data-energy="Daily Avg" data-financial="Daily Avg Cost">Daily Avg</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
+                    </div>
+                  </div>
+
+                  <!-- Total This Month -->
+                  <div class="col-6 col-md-4">
+                    <div class="border p-3">
+                      <div class="fw-semibold metric-label" data-energy="Total this month" data-financial="Monthly Total">Total this month</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
+                    </div>
+                  </div>
+
+                  <!-- Monthly Avg -->
+                  <div class="col-6 col-md-4">
+                    <div class="border p-3">
+                      <div class="fw-semibold metric-label" data-energy="Monthly Avg" data-financial="Monthly Avg">Monthly Avg</div>
+                      <div class="mt-2 fs-5 metric-value" data-energy-value="0" data-financial-value="">0</div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rasyid -->
+          <div class="col-12">
+            <div class="border p-3">
+              <div class="d-flex justify-content-between align-items-center mt-3 mb-3 flex-wrap gap-2">
+                <div class="btn-group" role="group" id="rangeButtons">
+                  <button class="btn active" data-range="week">Week</button>
+                  <button class="btn" data-range="month">Month</button>
+                  <button class="btn" data-range="year">Year</button>
+                </div>                
+              </div>
+
+              <div id="rasyid-energy" class="chart-container">
+                <canvas id="rasyidChartEnergy"></canvas>
+              </div>
+              <div id="rasyid-finance" class="chart-container" style="display: none;">
+                <canvas id="rasyidChartFinance"></canvas>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Tariff Setup Modal -->
+  <div class="modal fade" id="tariffModal" tabindex="-1" aria-labelledby="tariffModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-3">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tariffModalLabel">Set Your Tariff</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>        
+        <div class="modal-body">
+          <form id="tariffForm">
+            <div class="mb-3">
+              <label for="tariffRate" class="form-label">Cost per kWh (£)</label>
+              <input type="number" class="form-control" id="tariffRate" step="0.01" min="0" required>
+            </div>
+            <div class="mb-3">
+              <label for="standingCharge" class="form-label">Standing Charge (£/day)</label>
+              <input type="number" class="form-control" id="standingCharge" step="0.01" min="0" required>
+            </div>
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-chart">Save Settings</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Toastr -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<!-- Your Script -->
+<!-- <script src="js/main.js"></script> -->
+<!-- <script type="module" src="js/main.js"></script>  -->
+<script type="module" src="js/main2.js"></script> 
+
+<script>
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+
+  function setTheme(dark) {
+    document.body.classList.toggle('dark-mode', dark);
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    themeIcon.src = dark ? 'assets/icons/day-mode.png' : 'assets/icons/night-mode.png';
+  }
+
+  // Load saved theme
+  const savedTheme = localStorage.getItem('theme') === 'dark';
+  setTheme(savedTheme);
+
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.body.classList.contains('dark-mode');
+    setTheme(!isDark);
+  });
+</script>
+
+</body>
+</html>
