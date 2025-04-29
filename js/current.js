@@ -1,18 +1,18 @@
-import { fetchLatest, fetchAvg24h } from './api.js';
+import { fetchLatest, avgBetween } from './api.js';
 
-// Helper for tariff settings
 function getTariffSettings() {
   return {
-    costPerKwh: parseFloat(localStorage.getItem('tariffRate')) || 0.27, // £ per kWh
-    standingCharge: parseFloat(localStorage.getItem('standingCharge')) || 0
+    costPerKwh: parseFloat(localStorage.getItem('tariffRate')) || 0.27,
+    standingCharge: parseFloat(localStorage.getItem('standingCharge')) || 0,
+    impPerKwh: parseInt(localStorage.getItem('impPerKwh')) || 800
   };
 }
 
-// Track session (start time, energy accumulation, etc.)
 let sessionStart = Date.now();
 let sessionEnergy = 0; // Accumulated Wh
+let sessionAvgTotal = 0;
+let sessionAvgCount = 0;
 
-// Returns string of (Hh Mm Ss)
 function formatDuration(ms) {
   const s = Math.floor(ms / 1000);
   const h = Math.floor(s / 3600);
@@ -23,56 +23,25 @@ function formatDuration(ms) {
 
 export async function updateBryceGrid() {
   try {
-    const { costPerKwh, standingCharge } = getTariffSettings();
+    const { costPerKwh, standingCharge, impPerKwh } = getTariffSettings();
 
-    // --- Fetch live data ---
-    // Latest wattage (instantaneous power)
+    // --- Fetch current wattage ---
     const latest = await fetchLatest();
-    const watts = typeof latest === "object" && latest.wattage ? latest.wattage : parseFloat(latest) || 0;
+    const watts = typeof latest === "number" ? latest : parseFloat(latest) || 0;
 
-    // Average over last 24h
+    // --- Fetch 24hr average wattage using avgBetween ---
     const now = Date.now();
-    const oneDayAgo = now - 24 * 60 * 60 * 1000;
-    const avgData = await fetchAvg24h(oneDayAgo, now);
-    const avgWatts = avgData && avgData.wattage ? avgData.wattage : 0;
+    const oneDayAgo = now - 24 * 3600 * 1000;
+    const avgResult = await avgBetween(oneDayAgo, now, impPerKwh);
+    const avgWatts = typeof avgResult?.wattage === 'number' ? avgResult.wattage : 0;
 
     // --- At This Power Section ---
-    // LED blink rate: Assuming 1 blink per Wh, time (in seconds) per Wh = 3600 / watts
-    const ledBlinkSec = watts > 0 ? (3600 / watts) : 0;
-
-    // Cost (all in £)
+    const ledBlinkSec = watts > 0 ? 3600 / watts : 0;
     const costPerHour = (watts / 1000) * costPerKwh;
     const costPerDay = costPerHour * 24;
     const costPerWeek = costPerDay * 7;
     const costPerMonth = costPerDay * 30;
 
-    // --- Last 24hr Average Section ---
-    const avgCostPerDay = (avgWatts / 1000) * costPerKwh * 24;
-    const avgCostPerMonth = avgCostPerDay * 30;
-    const totalCostMonth = avgCostPerMonth + standingCharge;
-
-    // --- Session Section ---
-    // Use sessionStart and time elapsed to estimate session energy
-    const sessionNow = Date.now();
-    const sessionMs = sessionNow - sessionStart;
-    const sessionHrs = sessionMs / (1000 * 60 * 60);
-
-    // Session average power is live for now (can integrate further for better accuracy)
-    const sessionAvgWatts = watts;
-
-    // Session energy = avg watts * hours (Wh)
-    const sessionWh = sessionAvgWatts * sessionHrs;
-    // Session cost = Wh -> kWh, then * tariff
-    const sessionKwh = sessionWh / 1000;
-    const sessionCost = sessionKwh * costPerKwh;
-
-    // Cost breakdowns
-    const sessionCostPerHour = costPerHour;
-    const sessionCostPerDay = costPerDay;
-    const sessionCostPerWeek = costPerWeek;
-    const sessionCostPerMonth = costPerMonth;
-
-    // --- Update DOM ---
     $('#atThisPower').text(`${watts.toFixed(1)} W`);
     $('#ledBlinkRate').text(ledBlinkSec > 0 ? `${ledBlinkSec.toFixed(1)}s` : "N/A");
     $('#atThisPowerCost').text(`£${costPerHour.toFixed(2)}/hour`);
@@ -80,16 +49,43 @@ export async function updateBryceGrid() {
     $('#atThisPowerCostWeek').text(`£${costPerWeek.toFixed(2)}/week`);
     $('#atThisPowerCostMonth').text(`£${costPerMonth.toFixed(2)}/month`);
 
+    // --- Last 24hr Average Section ---
+    const avgCostPerHour = (avgWatts / 1000) * costPerKwh;
+    const avgCostPerDay = avgCostPerHour * 24;
+    const avgCostPerWeek = avgCostPerDay * 7;
+    const avgCostPerMonth = avgCostPerDay * 30;
+    const standingChargeMonth = standingCharge;
+    const totalCostMonth = avgCostPerMonth + standingChargeMonth;
+
     $('#avgPower').text(`${avgWatts.toFixed(1)} W`);
     $('#avgCostDay').text(`£${avgCostPerDay.toFixed(2)}`);
+    $('#avgCostWeek').text(`£${avgCostPerWeek.toFixed(2)}`);
     $('#avgCostMonth').text(`£${avgCostPerMonth.toFixed(2)}`);
-    $('#standingChargeMonth').text(`£${standingCharge.toFixed(2)}`);
+    $('#standingChargeMonth').text(`£${standingChargeMonth.toFixed(2)}`);
     $('#totalCostMonth').text(`£${totalCostMonth.toFixed(2)}`);
+
+    // --- Session Section ---
+    const sessionNow = Date.now();
+    const sessionMs = sessionNow - sessionStart;
+    const sessionSecs = sessionMs / 1000;
+
+    sessionEnergy += (watts * (1 / 3600)); // assume called every second
+    sessionAvgTotal += watts;
+    sessionAvgCount += 1;
+    const sessionAvgWatts = sessionAvgTotal / sessionAvgCount;
+
+    const sessionKwh = sessionEnergy / 1000;
+    const sessionCost = sessionKwh * costPerKwh;
+
+    const sessionCostPerHour = (sessionAvgWatts / 1000) * costPerKwh;
+    const sessionCostPerDay = sessionCostPerHour * 24;
+    const sessionCostPerWeek = sessionCostPerDay * 7;
+    const sessionCostPerMonth = sessionCostPerDay * 30;
 
     $('#sessionDuration').text(formatDuration(sessionMs));
     $('#sessionAvgPower').text(`${sessionAvgWatts.toFixed(1)} W`);
     $('#sessionTotalKwh').text(`${sessionKwh.toFixed(4)} kWh`);
-    $('#sessionCost').text(`£${sessionCost.toFixed(2)}`);
+    $('#sessionCost').text(`£${sessionCost.toFixed(4)}`);
     $('#sessionCostPerHour').text(`£${sessionCostPerHour.toFixed(2)}/hour`);
     $('#sessionCostPerDay').text(`£${sessionCostPerDay.toFixed(2)}/day`);
     $('#sessionCostPerWeek').text(`£${sessionCostPerWeek.toFixed(2)}/week`);

@@ -1,4 +1,4 @@
-import { fetchLatest, fetchAvg24h } from './api.js';
+import { fetchLatest } from './api.js';
 import { updateBryceGrid } from './current.js';
 
 let highPowerCostNotified = false;

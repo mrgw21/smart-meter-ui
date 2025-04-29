@@ -30,15 +30,14 @@ export async function fetchLatest() {
  * Fetch average power usage (in mW) over the past 24 hours.
  * Returns: Array with one number (e.g., [165330] for 165.33W)
  */
-export async function fetchAvg24h() {
+export async function avgBetween(start, end, imp_per_kWh) {
   try {
     const now = Date.now();
-    const dayAgo = now - 24 * 3600 * 1000;
-    const res = await fetch(`${BASE_URL}/avgbetween/${Math.floor(dayAgo)}/${Math.floor(now)}`);
-    const data = await res.json(); // Expecting [mW]
+    const res = await fetch(`${BASE_URL}/avgbetween/${deviceId}/${Math.floor(start)}/${Math.floor(end)}/${imp_per_kWh}`);
+    const data = await res.json();
     return data;
   } catch (err) {
-    console.error("fetchAvg24h failed:", err);
-    return [0];
+    console.error("fetch between failed:", err);
+    return 0;
   }
 }
